@@ -23,12 +23,34 @@
                 </MenuItem>
             </Menu>
         </DockPanel>
+        <StackPanel x:Name="stpHintData" Background="Transparent" Margin="0,249,0,0" Panel.ZIndex="99" Visibility="Collapsed" Width="300" HorizontalAlignment="Right">
+            <Border BorderThickness="1" Background="LightYellow">
+                <Grid Margin="20">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="64"/>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="64"/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <Image Source="{Binding MaterialUrl}" Width="64" Height="64" Grid.Column="0" Grid.Row="0"></Image>
+                    <TextBlock Text="{Binding MaterialName}" FontSize="16" FontWeight="Bold" Grid.Column="1" Grid.Row="0" VerticalAlignment="Center"></TextBlock>
+                    <!--TextBlock Text="{Binding MaterialCount}" FontSize="12" Grid.Row="2" Grid.ColumnSpan="2" Margin="10,0,0,0"/-->
+                    <StackPanel x:Name="ItemDescription" Grid.Row="3" Grid.ColumnSpan ="2" Margin="10,0,0,0" Width="250" HorizontalAlignment="Left" Background="LightYellow">
+                        <!-- Generate Description here.-->
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </StackPanel>
         <TabControl Height="199" VerticalAlignment="Top" Margin="0,20,0,0">
             <TabItem Header="按产品推算">
                 <Grid Background="#FFE5E5E5" x:Name="ProductionGrid" KeyDown="ProductionGrid_KeyDown">
                     <Label x:Name="lbl_Prod_Sel" Content="产品选择" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
                     <Label x:Name="lbl_Prod_Sel_Copy" Content="流程数" HorizontalAlignment="Left" Margin="10,40,0,0" VerticalAlignment="Top"/>
-                    <ComboBox x:Name="ProductSelection" HorizontalAlignment="Left" Margin="73,10,0,0" VerticalAlignment="Top" Width="235" Height="25" SelectionChanged="ComboBox_SelectionChanged" DisplayMemberPath="{Binding ProductName}" SelectedValuePath="{Binding RecipeID}" />
+                    <ComboBox x:Name="ProductSelection" HorizontalAlignment="Left" Margin="73,10,0,0" VerticalAlignment="Top" Width="235" Height="25" SelectionChanged="ComboBox_SelectionChanged" DisplayMemberPath="{Binding ProductName}" SelectedValuePath="{Binding RecipeID}" IsEditable="True" />
                     <TextBox x:Name="TB_ProductCount" HorizontalAlignment="Left" Height="25" Margin="73,40,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="235" VerticalContentAlignment="Center" PreviewTextInput="TB_ProductCount_PreviewTextInput" TextChanged="TB_ProductCount_TextChanged" Text="1"/>
                     <Label Content="每批次基础" HorizontalAlignment="Left" Margin="328,10,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.475,0.32"/>
                     <Label x:Name="ProductSize" Content="" HorizontalAlignment="Left" Margin="429,10,0,0" VerticalAlignment="Top"/>
@@ -66,6 +88,7 @@
                             </Style>
                         </ListView.ItemContainerStyle>
                     </ListView>
+                    <!--
                     <Popup Height="Auto" Width="300" Name="ListItemPopup" StaysOpen="True" AllowsTransparency="True">
                         <Border BorderThickness="1" Background="LightYellow">
                             <Grid Margin="20">
@@ -83,12 +106,12 @@
                                 <TextBlock Text="{Binding MaterialName}" FontSize="16" FontWeight="Bold" Grid.Column="1" Grid.Row="0" VerticalAlignment="Center"></TextBlock>
                                 <TextBlock Text="{Binding MaterialCount}" FontSize="12" Grid.Row="2" Grid.ColumnSpan="2" Margin="10,0,0,0"/>
                                 <StackPanel x:Name="ListItemDescription" Grid.Row="3" Grid.ColumnSpan ="2" Margin="10,0,0,0" Width="250" HorizontalAlignment="Left">
-                                    <!-- Generate Description here.-->
-                                </StackPanel>
+                                    <! Generate Description here.-->
+                    <!--/StackPanel>
                             </Grid>
                         </Border>
-                    </Popup>
-                    <Image x:Name="MainProductIcon" HorizontalAlignment="Left" Height="52" Margin="508,15,0,0" VerticalAlignment="Top" Width="52" Source="{Binding}"/>
+                    </Popup-->
+                    <Image x:Name="MainProductIcon" HorizontalAlignment="Left" Height="52" Margin="508,15,0,0" VerticalAlignment="Top" Width="52" Source="{Binding}" MouseEnter="MainProductIcon_MouseEnter" MouseLeave="MainProductIcon_MouseLeave"/>
                     <ItemsControl x:Name="SideProductImages" Margin="328,125,0,10" BorderBrush="Transparent" HorizontalAlignment="Left" Width="232">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
@@ -108,7 +131,9 @@
             </TabItem>
             <TabItem Header="按原料推算">
                 <Grid Background="#FFE5E5E5">
-                    <TextBlock HorizontalAlignment="Left" Margin="553,83,0,0" TextWrapping="Wrap" Text="敬请期待" VerticalAlignment="Top" Height="20" Width="58" RenderTransformOrigin="0.466,0.5"/>
+                    <Label x:Name="lbl_Prod_Sel_ByMaterials" Content="产品选择" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
+                    <ComboBox x:Name="ProductSelection_ByMaterials" HorizontalAlignment="Left" Margin="73,10,0,0" VerticalAlignment="Top" Width="235" Height="25" DisplayMemberPath="{Binding ProductName}" SelectedValuePath="{Binding RecipeID}" IsEditable="True" />
+
                 </Grid>
             </TabItem>
         </TabControl>
@@ -131,8 +156,7 @@
                 </Style>
             </TreeView.ItemContainerStyle>
         </TreeView>
-
-        <Popup Height="Auto" Width="300" Name="TreeViewPopup" StaysOpen="True" AllowsTransparency="True">
+        <!--Popup Height="Auto" Width="300" Name="TreeViewPopup" StaysOpen="True" AllowsTransparency="True">
             <Border BorderThickness="1" Background="LightYellow">
                 <Grid Margin="20">
                     <Grid.RowDefinitions>
@@ -149,11 +173,11 @@
                     <TextBlock Text="{Binding OriginalItemName}" FontSize="16" FontWeight="Bold" Grid.Column="1" Grid.Row="0" VerticalAlignment="Center"></TextBlock>
                     <TextBlock Text="{Binding MaterialCount}" FontSize="12" Grid.Row="1" Grid.ColumnSpan="1"></TextBlock>
                     <StackPanel x:Name="TreeItemDescription" Grid.Row="3" Grid.ColumnSpan ="2" Margin="10,0,0,0" Width="250" HorizontalAlignment="Left">
-                        <!-- Generate Description here.-->
-                    </StackPanel>
+                        <! Generate Description here.-->
+                    <!--/StackPanel>
                 </Grid>
             </Border>
-        </Popup>
+        </Popup-->
         <Label Content="结果" HorizontalAlignment="Left" Margin="0,219,0,0" VerticalAlignment="Top"/>
 
     </Grid>

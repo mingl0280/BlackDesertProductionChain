@@ -1,17 +1,17 @@
-﻿public class Materials
+﻿public class Material
 {
     public string MaterialUrl { get; set; }
     public string MaterialName { get; set; }
     public string MaterialCount { get; set; }
     public string MaterialID { get; set; }
 
-    public Materials()
+    public Material()
     {
         MaterialUrl = "";
         MaterialName = "";
         MaterialCount = "";
     }
-    public Materials(int id, string url, string name, int count)
+    public Material(int id, string url, string name, int count)
     {
         MaterialID = id.ToString();
         MaterialUrl = url;

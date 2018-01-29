@@ -26,8 +26,9 @@ namespace BlackDesertProductionTree
     /// <summary>
     /// MainWindow.xaml 的交互逻辑
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainWindow : Window, IDisposable
     {
+        
         public MainWindow()
         {
             InitializeComponent();
@@ -47,7 +48,7 @@ namespace BlackDesertProductionTree
             DirectoryInfo di = new DirectoryInfo(".");
             FileInfo[] fis = di.GetFiles("BlackDesertDB_*.db");
             dbFile = fis[0].FullName;
-            sConn = new SQLiteConnection(@"Data Source="+dbFile + @";Version=3");
+            sConn = new SQLiteConnection(@"Data Source=" + dbFile + @";Version=3");
             sConn.Open();
             //Initialize Craftable Items.
             SQLiteCommand sCmd = new SQLiteCommand(sConn)
@@ -57,11 +58,12 @@ namespace BlackDesertProductionTree
             DataTable dt = new DataTable();
             SQLiteDataAdapter sAdapter = new SQLiteDataAdapter(sCmd);
             sAdapter.Fill(dt);
-            for(int i=0;i<dt.Rows.Count;i++)
+            for (int i = 0; i < dt.Rows.Count; i++)
             {
                 pList.Add(new Productions(Convert.ToInt32(dt.Rows[i][2]), (string)dt.Rows[i][0], (string)dt.Rows[i][3], Convert.ToInt32(dt.Rows[i][1]), Convert.ToInt32(dt.Rows[i][4])));
             }
             ProductSelection.ItemsSource = pList;
+            ProductSelection_ByMaterials.ItemsSource = pList;
         }
 
         private void TB_ProductCount_PreviewTextInput(object sender, TextCompositionEventArgs e)
@@ -69,7 +71,7 @@ namespace BlackDesertProductionTree
             e.Handled = !AllNumeric(e.Text);
             if (AllNumeric(e.Text))
             {
-                if (int.Parse(e.Text)<0)
+                if (int.Parse(e.Text) < 0)
                 {
                     e.Handled = true;
                 }
@@ -86,6 +88,15 @@ namespace BlackDesertProductionTree
             if (int.TryParse(TB_ProductCount.Text, out int tmp))
             {
                 ProductCounts = tmp;
+                if (MultiplyProductionCount != null && MultiplySideProductCount != null && ProductSideProductionSize != null)
+                {
+                    var t = (Productions)ProductSelection.SelectedValue;
+
+                    if (!string.IsNullOrEmpty(MultiplyProductionCount.Content as string))
+                    {
+                        MultiplyProductionCount.Content = (t.ProductBatchSize * ProductsMultiplyFactor * ProductCounts).ToString();
+                    }
+                }
             }
             else
             {
@@ -115,7 +126,7 @@ namespace BlackDesertProductionTree
             SQLiteDataAdapter sda = new SQLiteDataAdapter(sCmd);
             sda.Fill(dt);
             List<string> URLList = new List<string>();
-            for(int i=0;i<dt.Rows.Count;i++)
+            for (int i = 0; i < dt.Rows.Count; i++)
             {
                 SideProducts += (string)dt.Rows[i][0] + ",";
                 SideProductsCount += dt.Rows[i][2].ToString() + ",";
@@ -142,19 +153,21 @@ namespace BlackDesertProductionTree
                     "WHERE CD.DropID = @pid AND RI.RecipeID <> CD.DropID ORDER BY RI.RecipeID"
             };
             sCmd.Parameters.AddWithValue("@pid", RecipeID);
-            List<Materials> mList = new List<Materials>();
+            List<Material> mList = new List<Material>();
             DataTable dt = new DataTable();
             SQLiteDataAdapter sda = new SQLiteDataAdapter(sCmd);
             sda.Fill(dt);
+            if (dt.Rows.Count < 1)
+                return;
             int rid = Convert.ToInt32(dt.Rows[0][0]);
-            for(int i=0;i<dt.Rows.Count;i++)
+            for (int i = 0; i < dt.Rows.Count; i++)
             {
                 if (rid != Convert.ToInt32(dt.Rows[i][0]))
                 {
-                    mList.Add(new Materials(-1, "", "或", -1));
+                    mList.Add(new Material(-1, "", "或", -1));
                     rid = Convert.ToInt32(dt.Rows[i][0]);
                 }
-                mList.Add(new Materials(Convert.ToInt32(dt.Rows[i][4]),dt.Rows[i][3].ToString(), dt.Rows[i][2].ToString(), Convert.ToInt32(dt.Rows[i][1])));
+                mList.Add(new Material(Convert.ToInt32(dt.Rows[i][4]), dt.Rows[i][3].ToString(), dt.Rows[i][2].ToString(), Convert.ToInt32(dt.Rows[i][1])));
             }
             MaterialListView.ItemsSource = mList;
         }
@@ -164,6 +177,15 @@ namespace BlackDesertProductionTree
             if (double.TryParse(TB_ProductMultiply.Text, out double tmp))
             {
                 ProductsMultiplyFactor = tmp;
+                if (MultiplyProductionCount != null && MultiplySideProductCount != null && ProductSideProductionSize != null)
+                {
+                    var t = (Productions)ProductSelection.SelectedValue;
+
+                    if (!string.IsNullOrEmpty(MultiplyProductionCount.Content as string))
+                    {
+                        MultiplyProductionCount.Content = (t.ProductBatchSize * ProductsMultiplyFactor * ProductCounts).ToString();
+                    }
+                }
             }
             else
             {
@@ -215,6 +237,8 @@ Treeview_Result.ItemsSource = lrht;
         private void Button_Click(object sender, RoutedEventArgs e)
         {
             var ChoosedProduct = (Productions)ProductSelection.SelectedValue;
+            if (ChoosedProduct == null)
+                return;
             Treeview_Result.ItemsSource = GetProductionTree(ChoosedProduct.ProductID, ProductCounts);
         }
 
@@ -222,7 +246,7 @@ Treeview_Result.ItemsSource = lrht;
         {
             List<ResultHitchary> LevelList = new List<ResultHitchary>();
             SQLiteCommand sCmd = new SQLiteCommand(sConn);
-            
+
             if (ProductID > 65535)
             {
                 sCmd.CommandText = "SELECT ItemID FROM ItemAlias WHERE GroupID = @gid";
@@ -239,7 +263,7 @@ Treeview_Result.ItemsSource = lrht;
                     sda = new SQLiteDataAdapter(sCmd);
                     DataTable itemDT = new DataTable();
                     sda.Fill(itemDT);
-                    ResultHitchary rItem = new ResultHitchary(mid.ToString(), itemDT.Rows[0][0].ToString(), itemDT.Rows[0][1].ToString() + ((i+1 == dt.Rows.Count)?"":"或"), LastLevelCount.ToString());
+                    ResultHitchary rItem = new ResultHitchary(mid.ToString(), itemDT.Rows[0][0].ToString(), itemDT.Rows[0][1].ToString() + ((i + 1 == dt.Rows.Count) ? "" : "或"), LastLevelCount.ToString());
                     if (CheckNextLevelExists(mid) || mid > 65535)
                     {
                         rItem.Children = GetProductionTree(mid, LastLevelCount);
@@ -277,7 +301,7 @@ Treeview_Result.ItemsSource = lrht;
                     sda.Fill(dt);
                 }
                 //SQLiteDataReader sReader = sCmd.ExecuteReader();
-                
+
                 SQLiteCommand sCmdN = new SQLiteCommand("SELECT Distinct RecipeID FROM CraftDrops WHERE DropID = @pid AND DropID <> RecipeID GROUP BY RecipeID", sConn);
                 sCmdN.Parameters.AddWithValue("@pid", ProductID);
                 DataTable dtn = new DataTable();
@@ -285,7 +309,7 @@ Treeview_Result.ItemsSource = lrht;
                 sdap.Fill(dtn);
                 if (dtn.Rows.Count > 1 && RecipeID == -1)
                 {
-                    foreach(DataRow dr in dtn.Rows)
+                    foreach (DataRow dr in dtn.Rows)
                     {
                         ResultHitchary rItem = new ResultHitchary("-1", "", "合成表#" + dr["RecipeID"].ToString(), LastLevelCount.ToString())
                         {
@@ -307,7 +331,7 @@ Treeview_Result.ItemsSource = lrht;
                         LevelList.Add(rItem);
                     }
                 }
-                
+
                 return LevelList;
             }
         }
@@ -336,9 +360,9 @@ Treeview_Result.ItemsSource = lrht;
             }
         }
 
-        private List<Materials> GetMaterialListByProduct(int ProductID)
+        private List<Material> GetMaterialListByProduct(int ProductID)
         {
-            List<Materials> mList = new List<Materials>();
+            List<Material> mList = new List<Material>();
 
             return mList;
         }
@@ -367,13 +391,15 @@ Treeview_Result.ItemsSource = lrht;
         private void ListViewItem_MouseEnter(object sender, MouseEventArgs e)
         {
             ListViewItem lvi = e.Source as ListViewItem;
-            Materials m = lvi.Content as Materials;
-            ListItemPopup.DataContext = m;
-            ListItemPopup.PlacementTarget = lvi;
-            ListItemPopup.Placement = PlacementMode.MousePoint;
-            List<UIElement> DescriptionElements = GetItemDescriptionElements(m.MaterialID);
-            ListItemDescription.Children.Clear();
+            Material m = lvi.Content as Material;
+            //ListItemPopup.DataContext = m;
+            //ListItemPopup.PlacementTarget = lvi;
+            //ListItemPopup.Placement = PlacementMode.MousePoint;
+            //List<UIElement> DescriptionElements = GetItemDescriptionElements(m.MaterialID);
+            GetItemDescriptionElements(m.MaterialID);
+            //ListItemDescription.Children.Clear();
             //ListItemDescription.RowDefinitions.Clear();
+            /*
             int counter = 0;
             foreach(UIElement uie in DescriptionElements)
             {
@@ -384,9 +410,27 @@ Treeview_Result.ItemsSource = lrht;
                 counter++;
             };
             ListItemPopup.IsOpen = true;
-            
+            */
         }
 
+        private void GetItemDescriptionElements(string itemID)
+        {
+            using (var wClient = new WebClient())
+            {
+                wClient.Encoding = Encoding.UTF8;
+                try
+                {
+                    Uri u = new Uri("http://bd.youxidudu.com/db/api/iteminfos.php?id=" + itemID);
+                    wClient.DownloadStringCompleted += WClient_DownloadStringCompleted;
+                    wClient.DownloadStringAsync(u);
+                }
+                catch (Exception)
+                {
+                    return;
+                }
+            }
+        }
+        /*
         private List<UIElement> GetItemDescriptionElements(string itemID)
         {
             string json = "";
@@ -395,7 +439,8 @@ Treeview_Result.ItemsSource = lrht;
                 wClient.Encoding = Encoding.UTF8;
                 try
                 {
-                    json = wClient.DownloadString("http://bd.youxidudu.com/db/api/iteminfos.php?id=" + itemID);
+                    Uri u = new Uri("http://bd.youxidudu.com/db/api/iteminfos.php?id=" + itemID);
+                    json = wClient.DownloadString(u);
                 }catch (Exception)
                 {
                     List<UIElement> ne = new List<UIElement>();
@@ -426,7 +471,8 @@ Treeview_Result.ItemsSource = lrht;
                         Margin = new Thickness(0)
                     };
                     var thisLine = DescriptionLines[i];
-                    var LineSpans = thisLine.Split(new string[] { "<span style=color:" }, StringSplitOptions.RemoveEmptyEntries);
+                    var LineSpans = thisLine.Split(new string[] { "<span style=color:", @"</span>" }, StringSplitOptions.RemoveEmptyEntries);
+                    SolidColorBrush LastForegroundBrush = new SolidColorBrush();
                     sp.Orientation = Orientation.Horizontal;
                     sp.HorizontalAlignment = HorizontalAlignment.Left;
                     foreach(string content in LineSpans)
@@ -440,12 +486,13 @@ Treeview_Result.ItemsSource = lrht;
                         if (content.StartsWith("#"))
                         {
                             tb.Foreground = (SolidColorBrush)(new BrushConverter().ConvertFrom(content.Substring(0, 7)));
-                            var realcontent = content.Replace(@"<\/span>", "").Substring(8).Replace("</span>","").Trim();
+                            LastForegroundBrush = (SolidColorBrush)(new BrushConverter().ConvertFrom(content.Substring(0, 7)));
+                            var realcontent = content.Replace(@"</span>", "").Substring(8).Replace("/span>","").Replace("<","").Trim();
                             tb.Text = realcontent;
                         }
                         else
                         {
-                            tb.Text = content.Trim();
+                            tb.Text = content.Replace(@"</span>", "").Trim();
                         }
                         sp.Children.Add(tb);
                     }
@@ -462,17 +509,106 @@ Treeview_Result.ItemsSource = lrht;
             }
             return lui;
         }
+        */
+        private void WClient_DownloadStringCompleted(object sender, DownloadStringCompletedEventArgs e)
+        {
+            stpHintData.Visibility = Visibility.Visible;
+            string json = "";
+            List<UIElement> ne = new List<UIElement>();
+            if (e.Error != null)
+            {
+                TextBlock etb = new TextBlock() { Text = "ERROR IN NETWORK QUERY!!!" };
+                ne.Add(etb);
+            }
+            else
+            {
+                json = e.Result;
+                RawItemInfo rInfo = JsonConvert.DeserializeObject<RawItemInfo>(json);
+                string RawDescriptionStr = rInfo.Description;
+                Material m = new Material(Convert.ToInt32(rInfo.item_id, 10), rInfo.IconImageFile, rInfo.ItemName, 0);
+                ItemDescription.Children.Clear();
+                stpHintData.DataContext = m;
+                
+                if (string.IsNullOrEmpty(RawDescriptionStr))
+                {
+                    TextBlock etb = new TextBlock() { Text = "没有描述." };
+                    ne.Add(etb);
+                    goto PostProcess;
+                }
+                string[] DescriptionLines = RawDescriptionStr.Split(new string[] { @"<br>" }, StringSplitOptions.RemoveEmptyEntries);
+                
+                for (int i = 0; i < DescriptionLines.Length; i++)
+                {
+                    if (DescriptionLines[i].Contains("span"))
+                    {
+                        WrapPanel sp = new WrapPanel
+                        {
+                            HorizontalAlignment = HorizontalAlignment.Left,
+                            MaxHeight = 100,
+                            Margin = new Thickness(0)
+                        };
+                        var thisLine = DescriptionLines[i];
+                        var LineSpans = thisLine.Split(new string[] { "<span style=color:", @"</span>" }, StringSplitOptions.RemoveEmptyEntries);
+                        SolidColorBrush LastForegroundBrush = new SolidColorBrush();
+                        sp.Orientation = Orientation.Horizontal;
+                        sp.HorizontalAlignment = HorizontalAlignment.Left;
+                        foreach (string content in LineSpans)
+                        {
+                            TextBlock tb = new TextBlock
+                            {
+                                TextWrapping = TextWrapping.Wrap,
+                                HorizontalAlignment = HorizontalAlignment.Left,
+                                Margin = new Thickness(0)
+                            };
+                            if (content.StartsWith("#"))
+                            {
+                                tb.Foreground = (SolidColorBrush)(new BrushConverter().ConvertFrom(content.Substring(0, 7)));
+                                LastForegroundBrush = (SolidColorBrush)(new BrushConverter().ConvertFrom(content.Substring(0, 7)));
+                                var realcontent = content.Replace(@"</span>", "").Substring(8).Replace("/span>", "").Replace("<", "").Trim();
+                                tb.Text = realcontent;
+                            }
+                            else
+                            {
+                                tb.Text = content.Replace(@"</span>", "").Trim();
+                            }
+                            sp.Children.Add(tb);
+                        }
+                        ne.Add(sp);
+                    }
+                    else
+                    {
+                        TextBlock tb = new TextBlock
+                        {
+                            TextWrapping = TextWrapping.Wrap,
+                            Text = DescriptionLines[i].Trim()
+                        };
+                        ne.Add(tb);
+                    }
+                }
+            }
+            PostProcess:
+            int counter = 0;
+            foreach (UIElement uie in ne)
+            {
+                //ListItemDescription.RowDefinitions.Add(new RowDefinition());
+                //uie.SetValue(Grid.RowProperty, counter);
+                //uie.SetValue(Grid.ColumnSpanProperty, 1);
+                ItemDescription.Children.Add(uie);
+                counter++;
+            };
+        }
 
         private void ListViewItem_MouseLeave(object sender, MouseEventArgs e)
         {
-            ListItemPopup.IsOpen = false;
+            //ListItemPopup.IsOpen = false;
+            stpHintData.Visibility = Visibility.Collapsed;
         }
 
         private void BtnCalculateAllRecipes_Click(object sender, RoutedEventArgs e)
         {
             List<ResultHitchary> ResultList = Treeview_Result.ItemsSource as List<ResultHitchary>;
             Dictionary<string, int> StatCount = new Dictionary<string, int>();
-            foreach(ResultHitchary item in ResultList)
+            foreach (ResultHitchary item in ResultList)
             {
                 if (StatCount.ContainsKey(item.ItemName))
                 {
@@ -482,9 +618,9 @@ Treeview_Result.ItemsSource = lrht;
                 {
                     StatCount.Add(item.ItemName, Convert.ToInt32(item.ItemCount));
                 }
-                if (item.Children!=null)
+                if (item.Children != null)
                 {
-                    foreach(KeyValuePair<string, int> it in GetLayerStat(item.Children.ToList()))
+                    foreach (KeyValuePair<string, int> it in GetLayerStat(item.Children.ToList()))
                     {
                         if (StatCount.ContainsKey(it.Key))
                         {
@@ -498,7 +634,7 @@ Treeview_Result.ItemsSource = lrht;
                 }
             }
             string statResults = "总计数据：";
-            foreach(KeyValuePair<string, int> item in StatCount)
+            foreach (KeyValuePair<string, int> item in StatCount)
             {
                 statResults += string.Format("{0}: {1} 个\r\n", new string[] { item.Key, item.Value.ToString() });
             }
@@ -549,12 +685,18 @@ Treeview_Result.ItemsSource = lrht;
         {
             TreeViewItem lvi = e.Source as TreeViewItem;
             ResultHitchary m = lvi.Header as ResultHitchary;
-            TreeViewPopup.DataContext = m;
-            TreeViewPopup.PlacementTarget = lvi;
-            TreeViewPopup.Placement = PlacementMode.MousePoint;
-            List<UIElement> DescriptionElements = GetItemDescriptionElements(m.ItemID);
-            TreeItemDescription.Children.Clear();
+            if (m.ItemName.Contains("合成表"))
+            {
+                return;
+            }
+            //TreeViewPopup.DataContext = m;
+            //TreeViewPopup.PlacementTarget = lvi;
+            //TreeViewPopup.Placement = PlacementMode.MousePoint;
+            //List<UIElement> DescriptionElements = GetItemDescriptionElements(m.ItemID);
+            GetItemDescriptionElements(m.ItemID);
+            //TreeItemDescription.Children.Clear();
             //ListItemDescription.RowDefinitions.Clear();
+            /*
             int counter = 0;
             foreach (UIElement uie in DescriptionElements)
             {
@@ -565,11 +707,13 @@ Treeview_Result.ItemsSource = lrht;
                 counter++;
             };
             TreeViewPopup.IsOpen = true;
+            */
         }
 
         private void TreeViewItem_MouseLeave(object sender, MouseEventArgs e)
         {
-            TreeViewPopup.IsOpen = false;
+            //TreeViewPopup.IsOpen = false;
+            stpHintData.Visibility = Visibility.Collapsed;
         }
 
         private void TVTooptip_ToolTipOpening(object sender, ToolTipEventArgs e)
@@ -605,6 +749,68 @@ Treeview_Result.ItemsSource = lrht;
         private void GetHelpMenuItem_Click(object sender, RoutedEventArgs e)
         {
             MessageBox.Show("敬请期待...", "未实现");
+        }
+
+        private void MainProductIcon_MouseEnter(object sender, MouseEventArgs e)
+        {
+            var tmp = (Productions)ProductSelection.SelectedValue;
+            Material m = new Material(tmp.ProductID, tmp.ProductPictureURL, tmp.ProductName, 1);
+            //ListItemPopup.DataContext = m;
+            //ListItemPopup.PlacementTarget = e.Source as Image;
+            //ListItemPopup.Placement = PlacementMode.MousePoint;
+            //List<UIElement> DescriptionElements = GetItemDescriptionElements(m.MaterialID);
+            GetItemDescriptionElements(m.MaterialID);
+            /*
+            ListItemDescription.Children.Clear();
+            //ListItemDescription.RowDefinitions.Clear();
+            int counter = 0;
+            foreach (UIElement uie in DescriptionElements)
+            {
+                //ListItemDescription.RowDefinitions.Add(new RowDefinition());
+                //uie.SetValue(Grid.RowProperty, counter);
+                //uie.SetValue(Grid.ColumnSpanProperty, 1);
+                ListItemDescription.Children.Add(uie);
+                counter++;
+            };
+            ListItemPopup.IsOpen = true;
+            */
+        }
+
+        private void MainProductIcon_MouseLeave(object sender, MouseEventArgs e)
+        {
+            /*
+            if (ListItemPopup.IsOpen)
+            {
+                ListItemPopup.IsOpen = false;
+            }
+            */
+            if (stpHintData.Visibility == Visibility.Visible)
+            {
+                stpHintData.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        
+        protected virtual void Dispose(bool disposing)
+        {
+            if (sConn != null)
+            {
+                if (sConn.State != ConnectionState.Broken && sConn.State != ConnectionState.Closed)
+                {
+                    sConn.Close();
+                    sConn.Dispose();
+                }
+            }
+        }
+
+        ~MainWindow()
+        {
+            Dispose(false);
         }
     }
 }
