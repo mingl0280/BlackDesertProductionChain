@@ -21,3 +21,24 @@
 本工具发布于GPL v2协议，使用了NewtonSoft.json和System.Data.SQLite.
 
 感谢黑沙宝典提供的数据支持和API服务。
+
+
+# Black Desert Production Tree Analyzer
+
+This tool is used for analyzing the production process in the Black Desert. Due to data source problem the tool only contains Chinese data.
+
+## Usage
+
+Type in your desired production and click on the calculate.
+
+## Addon information
+
+If you have the data in other servers dumped with the same format of the original one, you should be able to analyze them using this tool.
+
+The database file should start with "BlackDesertDB_" and end with ".db" appendix.
+
+***
+
+This tool is published under GPL v2 with external lib support from NewtonSoft.json and System.Data.SQLite.
+
+Hover layer information is provided by 黑沙宝典 (bd.youxidudu.com). 

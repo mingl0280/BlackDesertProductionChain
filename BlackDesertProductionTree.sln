@@ -1,11 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26730.15
+VisualStudioVersion = 15.0.27130.2024
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlackDesertProductionTree", "BlackDesertProductionTree\BlackDesertProductionTree.csproj", "{271AC05A-114D-41A2-8D23-369FD2D10639}"
 EndProject
 Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "BDPSetup", "BDPSetup\BDPSetup.vdproj", "{F7A1DCFF-2820-40A7-B8BB-29CC2119162F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlackDesertProductionTreeMWTest", "BlackDesertProductionTreeMWTest\BlackDesertProductionTreeMWTest.csproj", "{A76630EE-480C-47AC-A896-B3E1119453DC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -19,6 +21,10 @@ Global
 		{271AC05A-114D-41A2-8D23-369FD2D10639}.Release|Any CPU.Build.0 = Release|Any CPU
 		{F7A1DCFF-2820-40A7-B8BB-29CC2119162F}.Debug|Any CPU.ActiveCfg = Debug
 		{F7A1DCFF-2820-40A7-B8BB-29CC2119162F}.Release|Any CPU.ActiveCfg = Release
+		{A76630EE-480C-47AC-A896-B3E1119453DC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A76630EE-480C-47AC-A896-B3E1119453DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A76630EE-480C-47AC-A896-B3E1119453DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A76630EE-480C-47AC-A896-B3E1119453DC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
